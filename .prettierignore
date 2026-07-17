@@ -1,0 +1,11 @@
+{
+    "dist/**"
+    "node_modules/**"
+    "*.min.js"
+    "*.bundle.js"
+    "*.map"
+    "*.log"
+    "*.lock"
+    "*.tsbuildinfo"
+    "*.d.ts"
+}
