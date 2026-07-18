@@ -12,7 +12,7 @@ import {
     getEmployeeByStatus,
     getEmployeeProfile,
     getEmployeeProfilebyId,
-    loginEmployee
+    getEmployeeByRole
 } from "../controllers/employee.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
@@ -23,9 +23,6 @@ router.route("/create-super-admin").post(
     createSuperAdmin
 );
 
-router.route("/login-employee").post(
-    loginEmployee
-)
 
 //secured routes
 
@@ -55,6 +52,11 @@ router.route("/delete-employee/:id").delete(
 router.route("/get-all-employees").get(
     authenticate,
     getAllEmployees
+);
+
+router.route("/get-employee-by-role/:role").get(
+    authenticate,
+    getEmployeeByRole
 );
 
 router.route("/get-employee-by-department/:department").get(

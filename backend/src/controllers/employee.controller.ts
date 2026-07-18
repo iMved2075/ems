@@ -21,6 +21,27 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadImage } from "../utils/cloudinary.js";
 import { Employee } from "../models/employee.model.js";
 
+const buildOrganizationChart = (employees: any[]) => {
+  const employeeMap: { [key: string]: any } = {};
+  const organizationChart: any[] = [];
+
+  employees.forEach((employee) => {
+    employeeMap[employee.employeeId] = employee;
+  });
+
+  employees.forEach((employee) => {
+    const reportingManagerId = employee.reportingManager;
+    if (reportingManagerId && employeeMap[reportingManagerId]) {
+      employeeMap[reportingManagerId].subordinates = employeeMap[reportingManagerId].subordinates || [];
+      employeeMap[reportingManagerId].subordinates.push(employee);
+    } else {
+      organizationChart.push(employee);
+    }
+  });
+
+  return organizationChart;
+};
+
 const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
   const {
     employeeId,
@@ -32,8 +53,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
     designation,
     department,
     salary,
-    joiningDate,
-    reportingManager,
+    joiningDate
   } = req.body;
   if (
     !employeeId ||
@@ -44,8 +64,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
     !designation ||
     !department ||
     !salary ||
-    !joiningDate ||
-    !reportingManager
+    !joiningDate || !role
   ) {
     throw new ApiError(400, "All fields are required");
   }
@@ -63,7 +82,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
       department,
       salary,
       joiningDate,
-      reportingManager,
+        role
     ].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields must be filled");
@@ -97,7 +116,6 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
     department,
     salary,
     joiningDate,
-    reportingManager,
     profilePicture: avatarUrl,
   });
 
@@ -393,4 +411,53 @@ const getEmployeeByStatus = asyncHandler(async (req: Request, res: Response) => 
     );
 });
 
-export { createSuperAdmin, loginEmployee, createEmployee, selfUpdateByEmployee, updateBySuperAdminorHR, deleteEmployee, getEmployeeProfilebyId, getEmployeeProfile, getEmployeeByDepartment, getAllEmployees, getEmployeeByDesignation, getEmployeeByStatus };
+const logoutEmployee = asyncHandler(async (req: Request, res: Response) => {
+    const employeeId = req.employee?.employeeId;
+    if (!employeeId) {
+        throw new ApiError(401, "Unauthorized");
+    }
+
+    await Employee.findByIdAndUpdate(
+        req.employee._id,
+        {
+            $set: { refreshToken: undefined }
+        },
+        { returnDocument: "after" }
+    )
+
+    const cookieOptions = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+        .status(200)
+        .clearCookie("refreshToken", cookieOptions)
+        .clearCookie("accessToken", cookieOptions)
+        .json(
+            new ApiResponse(200, "Employee logged out successfully", null)
+        );
+
+  });
+    
+
+// show organization tree
+
+const getOrganizationChart = asyncHandler(async (req: Request, res: Response) => {
+    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+        throw new ApiError(403, "Only super admins and HR can view the organization chart");
+    }
+
+    const employees = await Employee.find().select("-password");
+
+    const organizationChart = buildOrganizationChart(employees);
+
+    return res.status(200).json(
+        new ApiResponse(200, "Organization chart retrieved successfully", organizationChart)
+    );
+});
+
+
+
+
+export { createSuperAdmin, loginEmployee, createEmployee, selfUpdateByEmployee, updateBySuperAdminorHR, deleteEmployee, getEmployeeProfilebyId, getEmployeeProfile, getEmployeeByDepartment, getEmployeeByRole, getAllEmployees, getEmployeeByDesignation, getEmployeeByStatus, logoutEmployee, getOrganizationChart };

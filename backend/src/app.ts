@@ -14,4 +14,12 @@ app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+import employeeRoutes from "./routes/employee.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import organizationRoutes from "./routes/organization.routes.js";
+
+app.use("/api/employees", employeeRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/organization", organizationRoutes);
+
 export default app;

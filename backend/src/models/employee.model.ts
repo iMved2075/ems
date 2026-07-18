@@ -79,7 +79,6 @@ const employeeSchema = new Schema<EmployeeDoc, mongoose.Model<EmployeeDoc, {}, E
         },
         reportingManager: {
             type: String,
-            required: true
         },
         profilePicture: {
             type: String,
