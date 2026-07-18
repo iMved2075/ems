@@ -1,0 +1,92 @@
+import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware.js";
+import { 
+    createSuperAdmin, 
+    createEmployee, 
+    updateBySuperAdminorHR, 
+    selfUpdateByEmployee,
+    deleteEmployee,
+    getAllEmployees,
+    getEmployeeByDepartment,
+    getEmployeeByDesignation,
+    getEmployeeByStatus,
+    getEmployeeProfile,
+    getEmployeeProfilebyId,
+    loginEmployee
+} from "../controllers/employee.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+
+const router = Router();
+
+router.route("/create-super-admin").post(
+    upload.single("profileImage"),
+    createSuperAdmin
+);
+
+router.route("/login-employee").post(
+    loginEmployee
+)
+
+//secured routes
+
+router.route("/create-employee").post(
+    authenticate,
+    upload.single("profileImage"),
+    createEmployee
+);
+
+router.route("/update-employee/:id").put(
+    authenticate,
+    upload.single("profileImage"),
+    updateBySuperAdminorHR
+);
+
+router.route("/self-update-employee/:id").put(
+    authenticate,
+    upload.single("profileImage"),
+    selfUpdateByEmployee
+);
+
+router.route("/delete-employee/:id").delete(
+    authenticate,
+    deleteEmployee
+);
+
+router.route("/get-all-employees").get(
+    authenticate,
+    getAllEmployees
+);
+
+router.route("/get-employee-by-department/:department").get(
+    authenticate,
+    getEmployeeByDepartment
+);
+
+router.route("/get-employee-by-designation/:designation").get(
+    authenticate,
+    getEmployeeByDesignation
+);
+
+router.route("/get-employee-by-status/:status").get(
+    authenticate,
+    getEmployeeByStatus
+);
+
+router.route("/get-employee-profile").get(
+    authenticate,
+    getEmployeeProfile
+);
+
+router.route("/get-employee-profile/:id").get(
+    authenticate,
+    getEmployeeProfilebyId
+);
+
+router.route("/get-employee-profile/:id").get(
+    authenticate,
+    getEmployeeProfilebyId
+);
+
+export default router;
+
+
