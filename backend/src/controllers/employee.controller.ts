@@ -153,7 +153,6 @@ const loginEmployee = asyncHandler(async (req: Request, res: Response) => {
     $or: [{ employeeId }, { employeeEmail }],
   });
 
-
   if (!existingEmployee) {
     throw new ApiError(401, "Invalid employee ID or email");
   }
@@ -399,6 +398,10 @@ const getEmployeeProfilebyId = asyncHandler(
       throw new ApiError(404, "Employee not found");
     }
 
+    if (employee.isDeleted) {
+      throw new ApiError(403, "This employee account has been deleted");
+    }
+
     return res
       .status(200)
       .json(
@@ -419,7 +422,10 @@ const getAllEmployees = asyncHandler(async (req: Request, res: Response) => {
     );
   }
 
-  const employees = await Employee.find().select("-password");
+  const employees = await Employee.find()
+    .where("isDeleted")
+    .equals(false)
+    .select("-password");
 
   return res
     .status(200)
@@ -459,6 +465,8 @@ const getEmployeeByDepartment = asyncHandler(
     const employees = await Employee.find()
       .where("department")
       .equals(department)
+      .where("isDeleted")
+      .equals(false)
       .select("-password");
 
     return res
@@ -480,6 +488,8 @@ const getEmployeeByRole = asyncHandler(async (req: Request, res: Response) => {
   const employees = await Employee.find()
     .where("role")
     .equals(role)
+    .where("isDeleted")
+    .equals(false)
     .select("-password");
 
   return res
@@ -499,6 +509,8 @@ const getEmployeeByDesignation = asyncHandler(
     const employees = await Employee.find()
       .where("designation")
       .equals(designation)
+      .where("isDeleted")
+      .equals(false)
       .select("-password");
 
     return res
@@ -521,6 +533,8 @@ const getEmployeeByStatus = asyncHandler(
     const employees = await Employee.find()
       .where("status")
       .equals(status)
+      .where("isDeleted")
+      .equals(false)
       .select("-password");
 
     return res
@@ -568,7 +582,10 @@ const getOrganizationChart = asyncHandler(
       );
     }
 
-    const employees = await Employee.find().select("-password");
+    const employees = await Employee.find()
+      .where("isDeleted")
+      .equals(false)
+      .select("-password");
 
     const organizationChart = buildOrganizationChart(employees);
 
