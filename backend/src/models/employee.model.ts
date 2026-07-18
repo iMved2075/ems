@@ -2,69 +2,96 @@ import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
-const employeeSchema = new Schema({
+interface EmployeeMethods {
+    comparePassword(enteredPassword: string): Promise<boolean>;
+    generateAccessToken(): string;
+    generateRefreshToken(): string;
+}
 
-    employeeId: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true
+interface EmployeeDoc {
+    employeeId: string;
+    employeeName: string;
+    employeeEmail: string;
+    password: string;
+    department: string;
+    phoneNumber: string;
+    designation: string;
+    salary: number;
+    joiningDate: Date;
+    status: "active" | "inactive";
+    role: "super_admin" | "hr_manager" | "employee";
+    reportingManager: string;
+    profilePicture: string;
+    refreshToken?: string;
+}
+
+const employeeSchema = new Schema<EmployeeDoc, mongoose.Model<EmployeeDoc, {}, EmployeeMethods>, EmployeeMethods>(
+    {
+        employeeId: {
+            type: String,
+            required: true,
+            unique: true,
+            index: true
+        },
+        employeeName: {
+            type: String,
+            required: true
+        },
+        employeeEmail: {
+            type: String,
+            required: true,
+            unique: true
+        },
+        password: {
+            type: String,
+            required: true,
+            minlength: 6
+        },
+        department: {
+            type: String,
+            required: true
+        },
+        phoneNumber: {
+            type: String,
+            required: true
+        },
+        designation: {
+            type: String,
+            required: true
+        },
+        salary: {
+            type: Number,
+            required: true
+        },
+        joiningDate: {
+            type: Date,
+            required: true
+        },
+        status: {
+            type: String,
+            enum: ["active", "inactive"],
+            default: "active"
+        },
+        role: {
+            type: String,
+            enum: ["super_admin", "hr_manager", "employee"],
+            required: true
+        },
+        reportingManager: {
+            type: String,
+            required: true
+        },
+        profilePicture: {
+            type: String,
+            default: ""
+        },
+        refreshToken: {
+            type: String,
+            default: ""
+        }
     },
-    employeeName: {
-        type: String,
-        required: true
-    },
-    employeeEmail: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true,
-        minlength: 6
-    },
-    department: {
-        type: String,
-        required: true
-    },
-    phoneNumber: {
-        type: String,
-        required: true
-    },
-    designation: {
-        type: String,
-        required: true
-    },
-    salary: {
-        type: Number,
-        required: true
-    },
-    joiningDate: {
-        type: Date,
-        required: true
-    },
-    status: {
-        type: String,
-        enum: ["active", "inactive"],
-        default: "active"
-    },
-    role:{
-        type: String,
-        enum: ["super_admin", "hr_manager", "employee"],
-        required: true
-    },
-    reportingManager: {
-        type: String,
-        required: true
-    },
-    profilePicture: {
-        type: String,
-        default: ""
-    }
-},{
-    timestamps: true
-});
+    { timestamps: true }
+);
 
 employeeSchema.pre("save", async function () {
     if (!this.isModified("password")) {
