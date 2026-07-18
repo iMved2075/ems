@@ -32,7 +32,8 @@ const buildOrganizationChart = (employees: any[]) => {
   employees.forEach((employee) => {
     const reportingManagerId = employee.reportingManager;
     if (reportingManagerId && employeeMap[reportingManagerId]) {
-      employeeMap[reportingManagerId].subordinates = employeeMap[reportingManagerId].subordinates || [];
+      employeeMap[reportingManagerId].subordinates =
+        employeeMap[reportingManagerId].subordinates || [];
       employeeMap[reportingManagerId].subordinates.push(employee);
     } else {
       organizationChart.push(employee);
@@ -53,7 +54,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
     designation,
     department,
     salary,
-    joiningDate
+    joiningDate,
   } = req.body;
   if (
     !employeeId ||
@@ -64,7 +65,8 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
     !designation ||
     !department ||
     !salary ||
-    !joiningDate || !role
+    !joiningDate ||
+    !role
   ) {
     throw new ApiError(400, "All fields are required");
   }
@@ -82,7 +84,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
       department,
       salary,
       joiningDate,
-        role
+      role,
     ].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields must be filled");
@@ -151,8 +153,13 @@ const loginEmployee = asyncHandler(async (req: Request, res: Response) => {
     $or: [{ employeeId }, { employeeEmail }],
   });
 
+
   if (!existingEmployee) {
     throw new ApiError(401, "Invalid employee ID or email");
+  }
+
+  if (existingEmployee.isDeleted) {
+    throw new ApiError(403, "This employee account has been deleted");
   }
 
   const isPasswordValid = await existingEmployee.comparePassword(password);
@@ -189,275 +196,408 @@ const loginEmployee = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const createEmployee = asyncHandler(async (req: Request, res: Response) => {
-    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can create employees");
-    }
-    
-    const { employeeId, employeeName, employeeEmail, role, password, phoneNumber, designation, department, salary, joiningDate, reportingManager } = req.body;
-    if (!employeeId || !employeeName || !employeeEmail ||!role || !password || !phoneNumber || !designation || !department || !salary || !joiningDate || !reportingManager) {
-        throw new ApiError(400, "All fields are required");
-    }
+  if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+    throw new ApiError(403, "Only super admins and HR can create employees");
+  }
 
-    const existingEmployee = await Employee.findOne({ $or: [{ employeeId }, { employeeEmail }, { phoneNumber }] });
-    if (existingEmployee) {
-        throw new ApiError(400, "Employee with the same ID, email, or phone number already exists");
-    }
+  const {
+    employeeId,
+    employeeName,
+    employeeEmail,
+    role,
+    password,
+    phoneNumber,
+    designation,
+    department,
+    salary,
+    joiningDate,
+    reportingManager,
+  } = req.body;
+  if (
+    !employeeId ||
+    !employeeName ||
+    !employeeEmail ||
+    !role ||
+    !password ||
+    !phoneNumber ||
+    !designation ||
+    !department ||
+    !salary ||
+    !joiningDate ||
+    !reportingManager
+  ) {
+    throw new ApiError(400, "All fields are required");
+  }
 
-    const newEmployee = await Employee.create({
-        employeeId,
-        employeeName,
-        employeeEmail,
-        role,
-        password,
-        phoneNumber,
-        designation,
-        department,
-        salary,
-        joiningDate,
-        reportingManager,
-    });
-
-    if (!newEmployee) {
-        throw new ApiError(500, "Failed to create employee");
-    }
-
-    return res.status(201).json(
-        new ApiResponse(201, "Employee created successfully", {
-            employeeId: newEmployee.employeeId,
-            employeeName: newEmployee.employeeName,
-            employeeEmail: newEmployee.employeeEmail,
-            role: newEmployee.role,
-            phoneNumber: newEmployee.phoneNumber,
-            designation: newEmployee.designation,
-            department: newEmployee.department,
-            salary: newEmployee.salary,
-            joiningDate: newEmployee.joiningDate,
-            reportingManager: newEmployee.reportingManager,
-        })
+  const existingEmployee = await Employee.findOne({
+    $or: [{ employeeId }, { employeeEmail }, { phoneNumber }],
+  });
+  if (existingEmployee) {
+    throw new ApiError(
+      400,
+      "Employee with the same ID, email, or phone number already exists"
     );
+  }
 
+  const newEmployee = await Employee.create({
+    employeeId,
+    employeeName,
+    employeeEmail,
+    role,
+    password,
+    phoneNumber,
+    designation,
+    department,
+    salary,
+    joiningDate,
+    reportingManager,
+  });
+
+  if (!newEmployee) {
+    throw new ApiError(500, "Failed to create employee");
+  }
+
+  return res.status(201).json(
+    new ApiResponse(201, "Employee created successfully", {
+      employeeId: newEmployee.employeeId,
+      employeeName: newEmployee.employeeName,
+      employeeEmail: newEmployee.employeeEmail,
+      role: newEmployee.role,
+      phoneNumber: newEmployee.phoneNumber,
+      designation: newEmployee.designation,
+      department: newEmployee.department,
+      salary: newEmployee.salary,
+      joiningDate: newEmployee.joiningDate,
+      reportingManager: newEmployee.reportingManager,
+    })
+  );
 });
 
-const selfUpdateByEmployee = asyncHandler(async (req: Request, res: Response) => {
+const selfUpdateByEmployee = asyncHandler(
+  async (req: Request, res: Response) => {
     const employeeId = req.employee?.employeeId;
     if (!employeeId) {
-        throw new ApiError(401, "Unauthorized");
+      throw new ApiError(401, "Unauthorized");
     }
-    
+
     const { password, phoneNumber } = req.body;
 
     if (password && password.length < 6) {
-        throw new ApiError(400, "Password must be at least 6 characters long");
+      throw new ApiError(400, "Password must be at least 6 characters long");
     }
 
     const avatarLocalPath = req.file?.path;
 
     const avatarUrl = avatarLocalPath
-        ? await uploadImage(avatarLocalPath as string)
-        : "";
+      ? await uploadImage(avatarLocalPath as string)
+      : "";
 
     const updatedEmployee = await Employee.findByIdAndUpdate(
-        req.employee._id,
-        { $set: { phoneNumber: phoneNumber, profilePicture: avatarUrl, password: password } },
-        { new: true }
+      req.employee._id,
+      {
+        $set: {
+          phoneNumber: phoneNumber,
+          profilePicture: avatarUrl,
+          password: password,
+        },
+      },
+      { new: true }
     ).select("-password");
 
     if (!updatedEmployee) {
-        throw new ApiError(500, "Failed to update employee");
+      throw new ApiError(500, "Failed to update employee");
     }
 
-    return res.status(200).json(
+    return res
+      .status(200)
+      .json(
         new ApiResponse(200, "Employee updated successfully", updatedEmployee)
-    );
-});
+      );
+  }
+);
 
-const updateBySuperAdminorHR = asyncHandler(async (req: Request, res: Response) => {
+const updateBySuperAdminorHR = asyncHandler(
+  async (req: Request, res: Response) => {
     if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can update employees");
+      throw new ApiError(403, "Only super admins and HR can update employees");
     }
 
     const { employeeId } = req.params;
     const { phoneNumber, role, department, designation, salary } = req.body;
 
     if (req.employee?.role === "hr" && role === "super_admin") {
-        throw new ApiError(403, "HR cannot assign super admin role");
+      throw new ApiError(403, "HR cannot assign super admin role");
     }
 
     const updatedEmployee = await Employee.findByIdAndUpdate(
-        employeeId,
-        { $set: { phoneNumber: phoneNumber, role: role, department: department, designation: designation, salary: salary } },
-        { new: true }
+      employeeId,
+      {
+        $set: {
+          phoneNumber: phoneNumber,
+          role: role,
+          department: department,
+          designation: designation,
+          salary: salary,
+        },
+      },
+      { new: true }
     ).select("-password");
 
     if (!updatedEmployee) {
-        throw new ApiError(500, "Failed to update employee");
+      throw new ApiError(500, "Failed to update employee");
     }
 
-    return res.status(200).json(
+    return res
+      .status(200)
+      .json(
         new ApiResponse(200, "Employee updated successfully", updatedEmployee)
-    );
-});
+      );
+  }
+);
 
 const deleteEmployee = asyncHandler(async (req: Request, res: Response) => {
-    if (req.employee?.role !== "super_admin") {
-        throw new ApiError(403, "Only super admins can delete employees");
-    }
-    
-    const { employeeId } = req.body;
-
-    const deletedEmployee = await Employee.findByIdAndDelete(employeeId);
-
-    if (!deletedEmployee) {
-        throw new ApiError(404, "Employee not found");
-    }
-
-    return res.status(200).json(
-        new ApiResponse(200, "Employee deleted successfully", deletedEmployee)
-    );
-});
-
-const getEmployeeProfilebyId = asyncHandler(async (req: Request, res: Response) => {
-  if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-    throw new ApiError(403, "Only super admins and HR can view any employee profiles");
+  if (req.employee?.role !== "super_admin") {
+    throw new ApiError(403, "Only super admins can delete employees");
   }
 
   const { employeeId } = req.body;
+
+  if (!employeeId) {
+    throw new ApiError(400, "Employee ID is required");
+  }
+
+  const deletedEmployee = await Employee.findByIdAndUpdate(
+    employeeId,
+    { $set: { isDeleted: true, deletedAt: new Date() } },
+    { new: true }
+  ).select("-password");
+
+  if (!deletedEmployee) {
+    throw new ApiError(404, "Employee not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Employee deleted successfully", deletedEmployee)
+    );
+});
+
+const getEmployeeProfilebyId = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+      throw new ApiError(
+        403,
+        "Only super admins and HR can view any employee profiles"
+      );
+    }
+
+    const { employeeId } = req.body;
+    const employee = await Employee.findById(employeeId).select("-password");
+
+    if (!employee) {
+      throw new ApiError(404, "Employee not found");
+    }
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Employee profile retrieved successfully",
+          employee
+        )
+      );
+  }
+);
+
+const getAllEmployees = asyncHandler(async (req: Request, res: Response) => {
+  if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+    throw new ApiError(
+      403,
+      "Only super admins and HR can view all employee profiles"
+    );
+  }
+
+  const employees = await Employee.find().select("-password");
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "All employees retrieved successfully", employees)
+    );
+});
+
+const getEmployeeProfile = asyncHandler(async (req: Request, res: Response) => {
+  const employeeId = req.employee?.employeeId;
+  if (!employeeId) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
   const employee = await Employee.findById(employeeId).select("-password");
 
   if (!employee) {
     throw new ApiError(404, "Employee not found");
   }
-  
-  return res.status(200).json(
-    new ApiResponse(200, "Employee profile retrieved successfully", employee)
-  );
 
-});
-
-const getAllEmployees = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view all employee profiles");
-    }
-
-    const employees = await Employee.find().select("-password");
-
-    return res.status(200).json(
-        new ApiResponse(200, "All employees retrieved successfully", employees)
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Employee profile retrieved successfully", employee)
     );
 });
 
-const getEmployeeProfile = asyncHandler(async (req: Request, res: Response) => {
-    const employeeId = req.employee?.employeeId;
-    if (!employeeId) {
-        throw new ApiError(401, "Unauthorized");
-    }
-
-    const employee = await Employee.findById(employeeId).select("-password");
-
-    if (!employee) {
-        throw new ApiError(404, "Employee not found");
-    }
-
-    return res.status(200).json(
-        new ApiResponse(200, "Employee profile retrieved successfully", employee)
-    );
-});
-
-const getEmployeeByDepartment = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view employees by department");
+const getEmployeeByDepartment = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+      throw new ApiError(
+        403,
+        "Only super admins and HR can view employees by department"
+      );
     }
     const { department } = req.body;
-    const employees = await Employee.find().where("department").equals(department).select("-password");
-
-    return res.status(200).json(
-        new ApiResponse(200, "Employees retrieved successfully", employees)
-    );
-});
-
-const getEmployeeByRole = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view employees by role");
-    }
-    const { role } = req.body;
-    const employees = await Employee.find().where("role").equals(role).select("-password");
-
-    return res.status(200).json(
-        new ApiResponse(200, "Employees retrieved successfully", employees)
-    );
-});
-
-const getEmployeeByDesignation = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view employees by designation");
-    }
-    const { designation } = req.body;
-    const employees = await Employee.find().where("designation").equals(designation).select("-password");
-
-    return res.status(200).json(
-        new ApiResponse(200, "Employees retrieved successfully", employees)
-    );
-});
-
-const getEmployeeByStatus = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view employees by status");
-    }
-    const { status } = req.body;
-    const employees = await Employee.find().where("status").equals(status).select("-password");
-    
-    return res.status(200).json(
-        new ApiResponse(200, "Employees retrieved successfully", employees)
-    );
-});
-
-const logoutEmployee = asyncHandler(async (req: Request, res: Response) => {
-    const employeeId = req.employee?.employeeId;
-    if (!employeeId) {
-        throw new ApiError(401, "Unauthorized");
-    }
-
-    await Employee.findByIdAndUpdate(
-        req.employee._id,
-        {
-            $set: { refreshToken: undefined }
-        },
-        { returnDocument: "after" }
-    )
-
-    const cookieOptions = {
-        httpOnly: true,
-        secure: true,
-    };
+    const employees = await Employee.find()
+      .where("department")
+      .equals(department)
+      .select("-password");
 
     return res
-        .status(200)
-        .clearCookie("refreshToken", cookieOptions)
-        .clearCookie("accessToken", cookieOptions)
-        .json(
-            new ApiResponse(200, "Employee logged out successfully", null)
-        );
+      .status(200)
+      .json(
+        new ApiResponse(200, "Employees retrieved successfully", employees)
+      );
+  }
+);
 
-  });
-    
+const getEmployeeByRole = asyncHandler(async (req: Request, res: Response) => {
+  if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+    throw new ApiError(
+      403,
+      "Only super admins and HR can view employees by role"
+    );
+  }
+  const { role } = req.body;
+  const employees = await Employee.find()
+    .where("role")
+    .equals(role)
+    .select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Employees retrieved successfully", employees));
+});
+
+const getEmployeeByDesignation = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+      throw new ApiError(
+        403,
+        "Only super admins and HR can view employees by designation"
+      );
+    }
+    const { designation } = req.body;
+    const employees = await Employee.find()
+      .where("designation")
+      .equals(designation)
+      .select("-password");
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Employees retrieved successfully", employees)
+      );
+  }
+);
+
+const getEmployeeByStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+      throw new ApiError(
+        403,
+        "Only super admins and HR can view employees by status"
+      );
+    }
+    const { status } = req.body;
+    const employees = await Employee.find()
+      .where("status")
+      .equals(status)
+      .select("-password");
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Employees retrieved successfully", employees)
+      );
+  }
+);
+
+const logoutEmployee = asyncHandler(async (req: Request, res: Response) => {
+  const employeeId = req.employee?.employeeId;
+  if (!employeeId) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
+  await Employee.findByIdAndUpdate(
+    req.employee._id,
+    {
+      $set: { refreshToken: undefined },
+    },
+    { returnDocument: "after" }
+  );
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("refreshToken", cookieOptions)
+    .clearCookie("accessToken", cookieOptions)
+    .json(new ApiResponse(200, "Employee logged out successfully", null));
+});
 
 // show organization tree
 
-const getOrganizationChart = asyncHandler(async (req: Request, res: Response) => {
-    if(req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
-        throw new ApiError(403, "Only super admins and HR can view the organization chart");
+const getOrganizationChart = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (req.employee?.role !== "super_admin" && req.employee?.role !== "hr") {
+      throw new ApiError(
+        403,
+        "Only super admins and HR can view the organization chart"
+      );
     }
 
     const employees = await Employee.find().select("-password");
 
     const organizationChart = buildOrganizationChart(employees);
 
-    return res.status(200).json(
-        new ApiResponse(200, "Organization chart retrieved successfully", organizationChart)
-    );
-});
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Organization chart retrieved successfully",
+          organizationChart
+        )
+      );
+  }
+);
 
-
-
-
-export { createSuperAdmin, loginEmployee, createEmployee, selfUpdateByEmployee, updateBySuperAdminorHR, deleteEmployee, getEmployeeProfilebyId, getEmployeeProfile, getEmployeeByDepartment, getEmployeeByRole, getAllEmployees, getEmployeeByDesignation, getEmployeeByStatus, logoutEmployee, getOrganizationChart };
+export {
+  createSuperAdmin,
+  loginEmployee,
+  createEmployee,
+  selfUpdateByEmployee,
+  updateBySuperAdminorHR,
+  deleteEmployee,
+  getEmployeeProfilebyId,
+  getEmployeeProfile,
+  getEmployeeByDepartment,
+  getEmployeeByRole,
+  getAllEmployees,
+  getEmployeeByDesignation,
+  getEmployeeByStatus,
+  logoutEmployee,
+  getOrganizationChart,
+};

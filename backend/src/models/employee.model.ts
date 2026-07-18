@@ -23,6 +23,8 @@ interface EmployeeDoc {
     reportingManager: string;
     profilePicture: string;
     refreshToken?: string;
+    isDeleted: boolean;
+    deletedAt: Date | null;
 }
 
 const employeeSchema = new Schema<EmployeeDoc, mongoose.Model<EmployeeDoc, {}, EmployeeMethods>, EmployeeMethods>(
@@ -87,6 +89,14 @@ const employeeSchema = new Schema<EmployeeDoc, mongoose.Model<EmployeeDoc, {}, E
         refreshToken: {
             type: String,
             default: ""
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+        deletedAt: {
+            type: Date,
+            default: null
         }
     },
     { timestamps: true }
