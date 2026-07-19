@@ -32,19 +32,19 @@ router.route("/create-employee").post(
     createEmployee
 );
 
-router.route("/update-employee/:id").put(
+router.route("/update-employee/:employeeId").put(
     authenticate,
     upload.single("profileImage"),
     updateBySuperAdminorHR
 );
 
-router.route("/self-update-employee/:id").put(
+router.route("/self-update-employee").put(
     authenticate,
     upload.single("profileImage"),
     selfUpdateByEmployee
 );
 
-router.route("/delete-employee/:id").delete(
+router.route("/delete-employee/:employeeId").put(
     authenticate,
     deleteEmployee
 );
@@ -79,12 +79,7 @@ router.route("/get-employee-profile").get(
     getEmployeeProfile
 );
 
-router.route("/get-employee-profile/:id").get(
-    authenticate,
-    getEmployeeProfilebyId
-);
-
-router.route("/get-employee-profile/:id").get(
+router.route("/get-employee-profile/:employeeId").get(
     authenticate,
     getEmployeeProfilebyId
 );

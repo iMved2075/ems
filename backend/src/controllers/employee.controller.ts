@@ -1,19 +1,3 @@
-/*
-    Employee Controllers:
-    2. loginEmployee: Authenticates an employee and provides access tokens.
-    3. getEmployeeProfile: Retrieves the profile information of the authenticated employee.
-    4. updateEmployeeProfile: Updates the profile information of the authenticated employee.
-    5. deleteEmployeeProfile: Deletes the profile of the authenticated employee.
-    6. getAllEmployees: Retrieves a list of all employees in the system.
-    7. getEmployeeById: Retrieves the profile information of a specific employee by their ID.
-    8. updateEmployeeById: Updates the profile information of a specific employee by their ID.
-    9. deleteEmployeeById: Deletes the profile of a specific employee by their ID.
-    10. createEmployee: Creates a new employee in the system (admin only).
-    11. assignRoleToEmployee: Assigns a role to a specific employee (admin only).
-    12. removeRoleFromEmployee: Removes a role from a specific employee (admin only).
-   # 13. createSuperAdmin: Creates a super admin user in the system (admin only).
-*/
-
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { type Request, type Response } from "express";
 import { ApiError } from "../utils/ApiError.js";
@@ -85,7 +69,7 @@ const createSuperAdmin = asyncHandler(async (req: Request, res: Response) => {
       salary,
       joiningDate,
       role,
-    ].some((field) => field?.trim() === "")
+    ].some((field) => field === "")
   ) {
     throw new ApiError(400, "All fields must be filled");
   }
@@ -177,8 +161,7 @@ const loginEmployee = asyncHandler(async (req: Request, res: Response) => {
   );
 
   const cookieOptions = {
-    httpOnly: true,
-    secure: true,
+    httpOnly: true
   };
 
   return res
@@ -212,6 +195,20 @@ const createEmployee = asyncHandler(async (req: Request, res: Response) => {
     joiningDate,
     reportingManager,
   } = req.body;
+
+  console.log(
+    employeeId,
+    employeeName,
+    employeeEmail,
+    role,
+    password,
+    phoneNumber,
+    designation,
+    department,
+    salary,
+    joiningDate,
+    reportingManager
+  );
   if (
     !employeeId ||
     !employeeName ||
@@ -222,8 +219,7 @@ const createEmployee = asyncHandler(async (req: Request, res: Response) => {
     !designation ||
     !department ||
     !salary ||
-    !joiningDate ||
-    !reportingManager
+    !joiningDate
   ) {
     throw new ApiError(400, "All fields are required");
   }
@@ -274,16 +270,12 @@ const createEmployee = asyncHandler(async (req: Request, res: Response) => {
 
 const selfUpdateByEmployee = asyncHandler(
   async (req: Request, res: Response) => {
-    const employeeId = req.employee?.employeeId;
+    const employeeId = req.employee?._id;
     if (!employeeId) {
       throw new ApiError(401, "Unauthorized");
     }
-
-    const { password, phoneNumber } = req.body;
-
-    if (password && password.length < 6) {
-      throw new ApiError(400, "Password must be at least 6 characters long");
-    }
+    
+    const updateData = req.body;
 
     const avatarLocalPath = req.file?.path;
 
@@ -291,17 +283,27 @@ const selfUpdateByEmployee = asyncHandler(
       ? await uploadImage(avatarLocalPath as string)
       : "";
 
-    const updatedEmployee = await Employee.findByIdAndUpdate(
-      req.employee._id,
-      {
-        $set: {
-          phoneNumber: phoneNumber,
-          profilePicture: avatarUrl,
-          password: password,
-        },
-      },
-      { new: true }
-    ).select("-password");
+
+    const employeeToUpdate = await Employee.findById(employeeId);
+    if (!employeeToUpdate) {
+      throw new ApiError(404, "Employee not found");
+    }
+
+    const allowedFields = [
+      "phoneNumber",
+      "password",
+      "profilePicture"
+    ]
+
+    Object.keys(updateData).forEach((key) => {
+      if (!allowedFields.includes(key)) {
+        delete updateData[key];
+      }
+    });
+
+    Object.assign(employeeToUpdate, updateData);
+
+    const updatedEmployee = await employeeToUpdate.save();
 
     if (!updatedEmployee) {
       throw new ApiError(500, "Failed to update employee");
@@ -322,29 +324,41 @@ const updateBySuperAdminorHR = asyncHandler(
     }
 
     const { employeeId } = req.params;
-    const { phoneNumber, role, department, designation, salary } = req.body;
+    const updateData = req.body;
 
-    if (req.employee?.role === "hr" && role === "super_admin") {
-      throw new ApiError(403, "HR cannot assign super admin role");
+
+    const employeeToUpdate = await Employee.findById(employeeId);
+    console.log("Employee to update:", employeeToUpdate);
+
+    if (!employeeToUpdate) {
+      throw new ApiError(404, "Employee not found");
     }
 
-    const updatedEmployee = await Employee.findByIdAndUpdate(
-      employeeId,
-      {
-        $set: {
-          phoneNumber: phoneNumber,
-          role: role,
-          department: department,
-          designation: designation,
-          salary: salary,
-        },
-      },
-      { new: true }
-    ).select("-password");
+    if (req.employee?.role === "hr_manager") {
+      if (updateData.role === "super_admin") {
+        throw new ApiError(403, "HR cannot assign super admin role");
+      }
 
-    if (!updatedEmployee) {
-      throw new ApiError(500, "Failed to update employee");
+      const allowedFields = [
+        "phoneNumber",
+        "department",
+        "designation",
+        "salary",
+      ];
+      Object.keys(updateData).forEach((key) => {
+        if (!allowedFields.includes(key)) {
+          delete updateData[key];
+        }
+      });
     }
+
+     console.log("Update data:", updateData);
+     Object.assign(employeeToUpdate, updateData);
+
+
+     await employeeToUpdate.save();
+
+     const updatedEmployee = await Employee.findById(employeeId).select("-password");
 
     return res
       .status(200)
@@ -359,21 +373,27 @@ const deleteEmployee = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(403, "Only super admins can delete employees");
   }
 
-  const { employeeId } = req.body;
+  const { employeeId }  = req.params;
 
   if (!employeeId) {
     throw new ApiError(400, "Employee ID is required");
   }
 
+  const employeeToDelete = await Employee.findById(employeeId);
+  if (employeeToDelete?.isDeleted) {
+    throw new ApiError(404, "Employee not found or already deleted");
+  }
+
   const deletedEmployee = await Employee.findByIdAndUpdate(
     employeeId,
-    { $set: { isDeleted: true, deletedAt: new Date() } },
+    { $set: { isDeleted: true, deletedAt: new Date(),refreshToken: null } },
     { new: true }
   ).select("-password");
 
   if (!deletedEmployee) {
     throw new ApiError(404, "Employee not found");
   }
+
 
   return res
     .status(200)
@@ -391,7 +411,7 @@ const getEmployeeProfilebyId = asyncHandler(
       );
     }
 
-    const { employeeId } = req.body;
+    const { employeeId } = req.params;
     const employee = await Employee.findById(employeeId).select("-password");
 
     if (!employee) {
@@ -435,7 +455,7 @@ const getAllEmployees = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getEmployeeProfile = asyncHandler(async (req: Request, res: Response) => {
-  const employeeId = req.employee?.employeeId;
+  const employeeId = req.employee?._id;
   if (!employeeId) {
     throw new ApiError(401, "Unauthorized");
   }
@@ -461,13 +481,18 @@ const getEmployeeByDepartment = asyncHandler(
         "Only super admins and HR can view employees by department"
       );
     }
-    const { department } = req.body;
+    const { department } = req.params;
+    console.log("Department:", department);
+    if(!department) {
+      throw new ApiError(400, "Department is required");
+    }
     const employees = await Employee.find()
       .where("department")
       .equals(department)
       .where("isDeleted")
       .equals(false)
       .select("-password");
+
 
     return res
       .status(200)
@@ -484,7 +509,7 @@ const getEmployeeByRole = asyncHandler(async (req: Request, res: Response) => {
       "Only super admins and HR can view employees by role"
     );
   }
-  const { role } = req.body;
+  const { role } = req.params;
   const employees = await Employee.find()
     .where("role")
     .equals(role)
@@ -505,7 +530,7 @@ const getEmployeeByDesignation = asyncHandler(
         "Only super admins and HR can view employees by designation"
       );
     }
-    const { designation } = req.body;
+    const { designation } = req.params;
     const employees = await Employee.find()
       .where("designation")
       .equals(designation)
@@ -529,7 +554,10 @@ const getEmployeeByStatus = asyncHandler(
         "Only super admins and HR can view employees by status"
       );
     }
-    const { status } = req.body;
+    const { status } = req.params;
+    if(!status) {
+      throw new ApiError(400, "Status is required");
+    }
     const employees = await Employee.find()
       .where("status")
       .equals(status)

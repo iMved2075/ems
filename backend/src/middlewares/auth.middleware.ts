@@ -17,10 +17,10 @@ export const authenticate = asyncHandler(async (req: Request, res: Response, nex
     if (!accessToken) {
         throw new ApiError(401, "Unauthorized request");
     }
-
     try {
-        const decodedToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET as string) as { _id: string };
-        const employee = await Employee.findById(decodedToken?._id).select("-password -refreshToken");
+        const decodedToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET as string) as { id: string };
+
+        const employee = await Employee.findById(decodedToken.id).select("-password -refreshToken");
         if (!employee) {
             throw new ApiError(401, "Invalid access token");
         }
