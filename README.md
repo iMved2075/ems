@@ -112,6 +112,42 @@ The frontend will start on Vite's default dev server (typically `http://localhos
 - File/image upload support via Multer and Cloudinary
 - Responsive UI built with React, MUI, and Tailwind CSS
 
+## API Documentation
+
+Base URL: `http://localhost:<PORT>/api`
+
+Routes marked 🔒 require authentication (a valid access token, sent via cookie).
+
+### Auth — `/api/auth`
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/auth/login` | Log in an employee, returns access/refresh tokens |
+| POST | `/auth/logout` 🔒 | Log out the current employee |
+
+### Employees — `/api/employees`
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/employees/create-super-admin` | Create the initial super admin (accepts `profileImage` file upload) |
+| POST | `/employees/create-employee` 🔒 | Create a new employee (accepts `profileImage` file upload) |
+| PUT | `/employees/update-employee/:employeeId` 🔒 | Update an employee's details (Super Admin/HR only, accepts `profileImage` file upload) |
+| PUT | `/employees/self-update-employee` 🔒 | Update the logged-in employee's own profile (accepts `profileImage` file upload) |
+| PUT | `/employees/delete-employee/:employeeId` 🔒 | Soft-delete/deactivate an employee |
+| GET | `/employees/get-all-employees` 🔒 | List all employees |
+| GET | `/employees/get-employee-by-role/:role` 🔒 | Filter employees by role |
+| GET | `/employees/get-employee-by-department/:department` 🔒 | Filter employees by department |
+| GET | `/employees/get-employee-by-designation/:designation` 🔒 | Filter employees by designation |
+| GET | `/employees/get-employee-by-status/:status` 🔒 | Filter employees by status |
+| GET | `/employees/get-employee-profile` 🔒 | Get the logged-in employee's own profile |
+| GET | `/employees/get-employee-profile/:employeeId` 🔒 | Get a specific employee's profile by ID |
+
+### Organization — `/api/organization`
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| GET | `/organization/tree` 🔒 | Get the organization chart (employee hierarchy) |
+
 ## Contributing
 
 Contributions, issues, and feature requests are welcome. Feel free to open an issue or submit a pull request.
