@@ -1,0 +1,38 @@
+name: Deploy Backend (Docker)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "backend/**"
+      - "Dockerfile"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/ems-backend:latest
+
+      # If deploying to Render/Railway/Fly with a "deploy on new image" hook,
+      # trigger it here. Example for Render:
+      # - name: Trigger Render deploy
+      #   run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
