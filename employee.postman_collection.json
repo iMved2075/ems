@@ -1,0 +1,328 @@
+{
+  "info": {
+    "_postman_id": "d15c8e67-496b-47c7-80db-9de197d58642",
+    "name": "employee",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33952501",
+    "_collection_link": "https://go.postman.co/collection/33952501-d15c8e67-496b-47c7-80db-9de197d58642?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Create-super-admin",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"employeeId\" : \"12345\",\r\n      \"employeeName\" : \"abcd\",\r\n      \"employeeEmail\" : \"abc@@\",\r\n      \"password\" : \"password\",\r\n      \"phoneNumber\": \"123456\",\r\n      \"designation\" : \"SuperAdmin\",\r\n      \"department\" : \"IT\",\r\n      \"salary\" : 120000,\r\n      \"joiningDate\": \"2020/02/02\",\r\n      \"role\" : \"super_admin\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{localhost}}/api/employees/create-super-admin",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "create-super-admin"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "create-employee",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"employeeId\" : \"123467\",\r\n      \"employeeName\" : \"abcd\",\r\n      \"employeeEmail\" : \"Aabcd@@\",\r\n      \"password\" : \"password\",\r\n      \"phoneNumber\": \"12345678\",\r\n      \"designation\" : \"employee\",\r\n      \"department\" : \"IT\",\r\n      \"salary\" : 120000,\r\n      \"joiningDate\": \"2020/02/02\",\r\n      \"role\" : \"employee\",\r\n      \"reportingManager\" : \"abcd\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{localhost}}/api/employees/create-employee",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "create-employee"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "update-employee",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"role\" : \"super_admin\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{localhost}}/api/employees/update-employee/:employeeId",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "update-employee",
+            ":employeeId"
+          ],
+          "variable": [
+            {
+              "key": "employeeId",
+              "value": "6a5b5990c494827d4b77e5ad"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "self-update",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"phoneNumber\": \"22222\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{localhost}}/api/employees/self-update-employee",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "self-update-employee"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "delete-employee",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": ""
+        },
+        "url": {
+          "raw": "{{localhost}}/api/employees/delete-employee/:employeeId",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "delete-employee",
+            ":employeeId"
+          ],
+          "variable": [
+            {
+              "key": "employeeId",
+              "value": "6a5b5990c494827d4b77e5ad"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-all-employees",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-all-employees",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-all-employees"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-employee-by-role",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-by-role/:role",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-by-role",
+            ":role"
+          ],
+          "variable": [
+            {
+              "key": "role",
+              "value": "super_admin"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-employee-by-department",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-by-department/:department",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-by-department",
+            ":department"
+          ],
+          "variable": [
+            {
+              "key": "department",
+              "value": "IT"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-employee-by-designation",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-by-designation/:designation",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-by-designation",
+            ":designation"
+          ],
+          "variable": [
+            {
+              "key": "designation",
+              "value": "SuperAdmin"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-employee-by-status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-by-status/:status",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-by-status",
+            ":status"
+          ],
+          "variable": [
+            {
+              "key": "status",
+              "value": "inactive"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get-employee-profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-profile",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-profile"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "getEmployeeById",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/employees/get-employee-profile/:employeeId",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "employees",
+            "get-employee-profile",
+            ":employeeId"
+          ],
+          "variable": [
+            {
+              "key": "employeeId",
+              "value": "6a5b5186a32677478faa4b20"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

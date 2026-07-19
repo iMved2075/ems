@@ -1,0 +1,64 @@
+{
+  "info": {
+    "_postman_id": "aa78a779-16c9-486b-be2b-5e3d5d5fab8c",
+    "name": "auth",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33952501",
+    "_collection_link": "https://go.postman.co/collection/33952501-aa78a779-16c9-486b-be2b-5e3d5d5fab8c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "logout",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/auth/logout",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "logout"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "login",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"email\" : \"abcd@gmail.com\",\r\n    \"password\":\"password\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{localhost}}/api/auth/login",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

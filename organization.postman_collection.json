@@ -1,0 +1,30 @@
+{
+  "info": {
+    "_postman_id": "d623cf96-2633-4476-a727-a32c537652d0",
+    "name": "organization",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "33952501",
+    "_collection_link": "https://go.postman.co/collection/33952501-d623cf96-2633-4476-a727-a32c537652d0?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{localhost}}/api/organization/tree",
+          "host": [
+            "{{localhost}}"
+          ],
+          "path": [
+            "api",
+            "organization",
+            "tree"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
